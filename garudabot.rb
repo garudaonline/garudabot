@@ -12,6 +12,7 @@ Hail_responses = ["Cower, puny mortals.","GarudaBot will devour you last.","Garu
 Stages = ["turns_downloaded", "turns_processed", "turns_uploaded", "emails_sent","specials_processed","day_finished"]
 
 def logmsg(t)
+	$stderr.puts
 	$stderr.puts "#{Time.now} #{t}"
 end
 
@@ -22,7 +23,7 @@ rescue
 	exit(1)
 end
 
-Xmluri = "http://www.phoenixbse.com/index.php?a=xml&uid=#{Xml_uid}&code=#{Xml_code}&sa="
+Xmluri = "https://www.phoenixbse.com/index.php?a=xml&uid=#{Xml_uid}&code=#{Xml_code}&sa="
 
 begin
 	(Server,Port,Nick,Realname,Username,AnnounceChannel) = File.open("garudabot.config") { |f| f.read.chomp.split(",") }
@@ -100,7 +101,7 @@ class GarudaBot < Net::IRC::Client
 						result_text += " " + i.elements["Mus"].attributes["value"] + "MUs"
 					end
 
-					result_text += " " + "http://phoenixbse.com/index.php?a=game&sa=items&id="+i.attributes["key"]
+					result_text += " " + "https://phoenixbse.com/index.php?a=game&sa=items&id="+i.attributes["key"]
 	
 					self.postmsg(result_text,dest)
 				end
@@ -114,7 +115,7 @@ class GarudaBot < Net::IRC::Client
 			Stages.each do |stage|
 				t = @prevtimes[stage]
 				logmsg "#{stage} #{t}"
-				if t.strftime("%s").to_i > 1 then
+				if not t.nil? and t.strftime("%s").to_i > 1 then
 					msg_text += "| #{stage.sub(/.*_/,'').capitalize}: #{t.strftime("%H:%M")} "
 				end
 			end
@@ -125,57 +126,72 @@ class GarudaBot < Net::IRC::Client
 	def on_rpl_welcome(m)
 		logmsg "JOINING #{AnnounceChannel}"
 		post JOIN, AnnounceChannel
-		self.poll_status(true)
+		self.poll_status
+		self.poll_items
 		@readylock.unlock
 	end
 
 	def postmsg(t,dest=AnnounceChannel)	
-		@readylock.synchronize {
+		Thread.new { @readylock.synchronize {
 			logmsg "POSTING #{t} to #{dest}"
 			post PRIVMSG, dest, t
 		}
+
+		}
 	end
 
-	def poll_status(silent=false)
+	def poll_items
 		begin
-			xml_status = open(Xmluri+"game_status") do |f| 
-				REXML::Document.new(f.read).elements["data"].elements["game_status"]
-			end
-			@xml_items = open(Xmluri+"items") do |f| 
-				REXML::Document.new(f.read).elements["data"].elements["items"]
-			end	
+			xml_items_raw = open(Xmluri+"items").read
 		
-		rescue Exception <= e
-			logmsg "EXCEPTION IN XML READ: #{e.inspect}"
+			@xml_items = REXML::Document.new(xml_items_raw).elements["data"].elements["items"]	
+
+			postmsg(@xml_items.elements.count.to_s + " known items (use ~item to search)")
+
+		rescue => e
+			logmsg "EXCEPTION IN POLL ITEMS: #{e.inspect}"
+			logmsg xml_items_raw[0..100]
 			logmsg e.backtrace.join("\n")
 		end
+	end
+
+	def poll_status
+	begin
+		xml_status_raw = open(Xmluri+"game_status").read
+
+        xml_status = REXML::Document.new(xml_status_raw).elements["data"].elements["game_status"]
 
 		@stardate = xml_status.elements["star_date"].text
 
+		status_changed = false
+
 		Stages.each do |stage|
-			newtime = DateTime.strptime(xml_status.elements[stage].text,"%s")
-			if not silent and newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
-				if stage == "day_finished" then
-					@prevtimes[stage] = newtime
-					logmsg("Day finished - #{self.to_s}")
-					self.postmsg(self.to_s)
-					#stages.map { |s| @prevtimes[s] }.join(",")
-				else
-					self.postmsg("Phoenix #{stage.tr('_',' ')}: #{newtime.strftime("%H:%M")}")
-					logmsg("#{stage} was #{@prevtimes[stage]} now #{newtime}")
-				end
+
+			newtime = Time.strptime(xml_status.elements[stage].text,"%s").localtime
+			
+			if newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
+				logmsg("#{stage} was #{@prevtimes[stage]} now #{newtime}")				
+				@prevtimes[stage] = newtime
+				status_changed = true
 			end
-			@prevtimes[stage] = newtime
+
 		end
 
-		logmsg("Finishing poll")
+		if status_changed then self.postmsg(self.to_s) end
+
+		$stderr.print "."
+
+    rescue => e
+			logmsg "EXCEPTION IN POLL STATUS: #{e.inspect}"
+			logmsg xml_status_raw
+			logmsg e.backtrace.join("\n")
+    end
 	end
 
 end
 
-
 while true do	
-
+begin
 	irc = nil
 
 	Thread.new do 
@@ -188,6 +204,7 @@ while true do
 			irc.finish
 		end
 		logmsg "IRC STOPPED"
+		exit
 	end
 
 
@@ -201,7 +218,7 @@ while true do
 			irc.poll_status
 		end
 
-	rescue Exception => e
+	rescue => e
 		logmsg "EXCEPTION #{e.inspect}"
 		logmsg e.backtrace.join("\n")
 	ensure
@@ -210,6 +227,9 @@ while true do
 	end
 
 	logmsg "RESTARTING"
+rescue => e
+	logmsg "UNCAUGHT EXCEPTION, RESTARTING"
+end
+
 	sleep(30)
-	
 end	
