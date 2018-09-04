@@ -163,21 +163,18 @@ class GarudaBot < Net::IRC::Client
 
 		@stardate = xml_status.elements["star_date"].text
 
-		status_changed = false
-
 		Stages.each do |stage|
 
 			newtime = Time.strptime(xml_status.elements[stage].text,"%s").localtime
 			
 			if newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
 				logmsg("#{stage} was #{@prevtimes[stage]} now #{newtime}")				
-				@prevtimes[stage] = newtime
-				status_changed = true
+				postmsg(Phoenix "#{stage}: #{newtime}"
 			end
 
-		end
+			@prevtimes[stage] = newtime
 
-		if status_changed then self.postmsg(self.to_s) end
+		end
 
 		$stderr.print "."
 
