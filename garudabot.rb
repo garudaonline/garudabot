@@ -173,7 +173,7 @@ class GarudaBot < Net::IRC::Client
 			
 			if newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
 				logmsg("#{stage} was #{@prevtimes[stage]} now #{newtime}")				
-				msg_list << "Phoenix #{stage.tr('_',' ')}: #{newtime.strftime("%H:%M")}")
+				msg_list << "Phoenix #{stage.tr('_',' ')}: #{newtime.strftime("%H:%M")}"
 			end
 
 			@prevtimes[stage] = newtime
