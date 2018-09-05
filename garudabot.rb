@@ -156,6 +156,9 @@ class GarudaBot < Net::IRC::Client
 	end
 
 	def poll_status
+
+	msg_list = []
+	
 	begin
 		xml_status_raw = open(Xmluri+"game_status").read
 
@@ -163,13 +166,14 @@ class GarudaBot < Net::IRC::Client
 
 		@stardate = xml_status.elements["star_date"].text
 
+
 		Stages.each do |stage|
 
 			newtime = Time.strptime(xml_status.elements[stage].text,"%s").localtime
 			
 			if newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
 				logmsg("#{stage} was #{@prevtimes[stage]} now #{newtime}")				
-				postmsg("Phoenix #{stage}: #{newtime}")
+				msg_list << "Phoenix #{stage.tr('_',' ')}: #{newtime.strftime("%H:%M")}")
 			end
 
 			@prevtimes[stage] = newtime
@@ -183,6 +187,9 @@ class GarudaBot < Net::IRC::Client
 			logmsg xml_status_raw
 			logmsg e.backtrace.join("\n")
     end
+
+	return msg_list
+
 	end
 
 end
@@ -212,7 +219,8 @@ begin
 			end
 	
 			sleep(60)
-			irc.poll_status
+			msg_list = irc.poll_status
+			msg_list.each { |m| irc.postmsg(m) }
 		end
 
 	rescue => e
