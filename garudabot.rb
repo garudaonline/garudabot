@@ -174,7 +174,10 @@ class Irc_bot < Net::IRC::Client
 		Log.debug("IRC_BOT/on_privmsg received #{m.inspect}")
 
 		@cmd.each_key do |k|
-			regex = /^~#{k}/
+			# Remove a possible nick from the start of the line to allow for discord bridges (yuck)
+			m.params[1].sub!(/^<[^>]+> /,'')
+
+			regex = /^~?#{k}/
 			if m.params[1].match(regex)
 				Log.debug "IRC_BOT/on_privmsg Matched #{regex.inspect}"
 				self.send("cmd_#{k}",m)
