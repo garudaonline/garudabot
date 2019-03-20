@@ -28,12 +28,10 @@ class Irc_bot < Net::IRC::Client
 	def initialize(*args)
 		super
 		@readylock = Mutex.new
-		@log.info("IRC_BOT/initialize Waiting for IRC reply")
 		@readylock.lock
-		@log.info("IRC_BOT/initialize IRC unlocked")
 		@prevtimes = {}
 		@cmd = {"help" => nil }
-		@log.level = @logger::INFO
+		@log.level = Logger::INFO
 	end
 
 	def on_privmsg(m)
@@ -112,6 +110,7 @@ class Garuda_bot < Irc_bot
 		post JOIN, AnnounceChannel
 		post_msg(@nexus.status)
 		@readylock.unlock
+		@log.info "GARUDA_BOT/on_repl_welcome irc ready"
 	end
 
 	def cmd_status(m)
@@ -164,46 +163,30 @@ class Garuda_bot < Irc_bot
 		@nexus.poll_status
 	end
 
-end
+	def start
+		@log.debug("GARUDA_BOT/start starting event thread")
+		Thread.new do
+			while true do
+				sleep(60)
+				if @readylock.locked? then 
+					@log.info("GARUDA_BOT/start event thread waiting for ready lock") 
+				end
+				@readylock.synchronize do
+					@log.debug("GARUDA_BOT/start event thread polling")
+					post_msg poll_status
+				end
 
-begin
-	irc = nil
-
-	Thread.new do 
-
-		begin
-			irc = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username})
-
-			irc.log.info "MAIN/irc_thread Starting"
-			irc.start
-		rescue => e
-			irc.log.error "MAIN/irc_thread #{e.inspect}"
-			irc.finish
-		end
-		irc.log.debug "MAIN/irc_thread IRC stopped"
-		exit
-	end
-
-	begin	
-		while true do
-			while irc.nil? do
-				irc.log.debug "MAIN/event_loop No IRC yet"
-				sleep(5)
 			end
-	
-			sleep(30)
-			irc.post_msg(irc.poll_status)
 		end
 
-	rescue => e
-		irc.log.error "MAIN/event_loop #{e.inspect}"
-	ensure
-		irc.log.debug "MAIN/event_loop CLOSING DOWN"
-		irc.finish unless irc.nil?
+		@log.debug("GARUDA_BOT/start starting irc")
+		super
 	end
 
-	irc.log.info "MAIN/main_loop RESTARTING"
-rescue => e
-	irc.log.error "MAIN/main_loop #{e.inspect}"
 end
+
+garuda = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username})
+garuda.start
+
+
 

@@ -41,6 +41,8 @@ class Nexus
 	def lookup_item(query)
 			replies = []
 
+			@log.info "NEXUS/lookup_item query [#{query}]"
+
 			if query =~ /^\d+$/ then
 				re = Regexp.new("^"+query+"$",true)
 			else
