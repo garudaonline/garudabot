@@ -12,7 +12,7 @@ Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
 
 Log = Logger.new(STDERR)
 Log.unknown("Log started")
-Log.level = Logger::DEBUG
+Log.level = Logger::INFO
 
 begin
 	(Server,Port,Nick,Realname,Username,AnnounceChannel) = File.open("garudabot.config") { |f| f.read.chomp.split(",") }
@@ -107,7 +107,7 @@ class Nexus
 	end
 
 	def poll_items
-		Log.info "NEXUS/poll_items Polling items"
+		Log.debug "NEXUS/poll_items Polling items"
 		begin
 			xml_items_raw = open(@xmluri+"items").read
 		
@@ -121,7 +121,7 @@ class Nexus
 	end
 
 	def poll_status
-		Log.info "NEXUS/poll_status Polling status"
+		Log.debug "NEXUS/poll_status Polling status"
 		replies = []
 	
 		begin
@@ -232,7 +232,8 @@ class Garuda_bot < Irc_bot
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
 							"hail" => "Appease the mighty garudabot",
 							"item" => "Search nexus for an item by either number or name",
-							"say" => nil
+							"say" => nil,
+							"quit" => nil
 						  })
 
 	end
@@ -260,14 +261,26 @@ class Garuda_bot < Irc_bot
 	end
 
 	def cmd_say(m)
-		Log.info "GARUDA_BOT/cmd_say #{m.inspect}"
 
 		if m.prefix.match(Owner) then
+			Log.info "GARUDA_BOT/cmd_say #{m.inspect}"
 			post_msg(m.params[1].sub(/^~say /,''))
 		else
+			Log.warn "GARUDA_BOT/cmd_say #{m.inspect}"
 			post_msg("No, shan't!",m.prefix.sub(/!.*/,''))
 		end
 	end
+
+	def cmd_quit(m)
+		if m.prefix.match(Owner) then
+			Log.info("GARUDA_BOT/cmd_quit Asked to quit by #{m.prefix}")
+			self.post "QUIT hasta la vista, I'll be back", AnnounceChannel
+			exit(0)
+		else
+			Log.warn("GARUDA_BOT/cmd_quit #{m.inspect}")
+			post_msg("Oi, bugger off",m.prefix.sub(/!.*/,''))
+		end
+	end	
 
 	def poll_status
 		@nexus.poll_status
