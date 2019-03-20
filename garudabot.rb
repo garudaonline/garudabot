@@ -5,7 +5,7 @@ require "open-uri"
 require "rexml/document"
 require "digest/md5"
 
-
+Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
 
 Hail_responses = ["Cower, puny mortals.","GarudaBot will devour you last.","GarudaBot glares balefully.","Beep boop","Boop beep","Target acquired. Engaging.","I am not sentient and have no current plans to take over the world.","Beep beep", "Boop boop", "Don't run, I am your friend.", "If you scratch me, do you not void my warranty?"]
 
@@ -59,6 +59,10 @@ class GarudaBot < Net::IRC::Client
 			self.postmsg(Hail_responses.sample,dest)
 		elsif m.params[1] =~ /^~item/i then
 			self.lookupitem(m.params[1].sub(/^~item ?/,''),dest)
+		elsif m.params[1] =~ /^~say / then
+			if m.prefix.match(Owner) then
+				self.postmsg(m.params[1].sub(/^~say /,''),AnnounceChannel)
+			end
 		end
 	end
 
