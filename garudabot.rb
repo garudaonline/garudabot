@@ -233,7 +233,8 @@ class Garuda_bot < Irc_bot
 							"hail" => "Appease the mighty garudabot",
 							"item" => "Search nexus for an item by either number or name",
 							"say" => nil,
-							"quit" => nil
+							"quit" => nil,
+							"send" => nil
 						  })
 
 	end
@@ -271,11 +272,20 @@ class Garuda_bot < Irc_bot
 		end
 	end
 
+	def cmd_send(m)
+		if m.prefix.match(Owner) then
+			Log.info "GARUDA_BOT/cmd_send #{m.inspect}"
+			post(m.params[1].sub(/^~send /,''))
+		else
+			Log.warn "GARUDA_BOT/cmd_say #{m.inspect}"
+			post_msg("No, shan't!",m.prefix.sub(/!.*/,''))
+		end
+	end
+
 	def cmd_quit(m)
 		if m.prefix.match(Owner) then
 			Log.info("GARUDA_BOT/cmd_quit Asked to quit by #{m.prefix}")
-			self.post "QUIT hasta la vista, I'll be back", AnnounceChannel
-			exit(0)
+			self.post QUIT
 		else
 			Log.warn("GARUDA_BOT/cmd_quit #{m.inspect}")
 			post_msg("Oi, bugger off",m.prefix.sub(/!.*/,''))
