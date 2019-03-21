@@ -2,11 +2,12 @@
 
 require "open-uri"
 require "rexml/document"
+require "logger"
 
 class Nexus
 	Stages = ["turns_downloaded", "turns_processed", "turns_uploaded", "emails_sent","specials_processed","day_finished"]
 
-	def initialize(log)
+	def initialize(log=Logger.new(STDOUT))
 		@prevtimes = {}
 		@log = log
 
@@ -19,12 +20,12 @@ class Nexus
 			exit(1)
 		end
 
-		self.poll_items
-		self.poll_status
+		self.get_items
+		self.get_status
 	end
 
 	
-	def status
+	def status_text
 			msg_text = "Phoenix #{@stardate} "
 
 			Stages.each do |stage|
@@ -38,10 +39,10 @@ class Nexus
 			return msg_text
 	end
 
-	def lookup_item(query)
+	def search_item(query)
 			replies = []
 
-			@log.info "NEXUS/lookup_item query [#{query}]"
+			@log.info "NEXUS/search_item query [#{query}]"
 
 			if query =~ /^\d+$/ then
 				re = Regexp.new("^"+query+"$",true)
@@ -89,23 +90,21 @@ class Nexus
 
 	end
 
-	def poll_items
-		@log.debug "NEXUS/poll_items Polling items"
+	def get_items
+		@log.debug "NEXUS/get_items Polling items"
 		begin
 			xml_items_raw = open(@xmluri+"items").read
 		
 			@xml_items = REXML::Document.new(xml_items_raw).elements["data"].elements["items"]	
 
-			return(@xml_items.elements.count.to_s + " known items (use ~item to search)")
-
 		rescue => e
-			@log.error "NEXUS/poll_items {e.inspect}"
+			@log.error "NEXUS/get_items {e.inspect}"
 		end
 	end
 
-	def poll_status
-		@log.debug "NEXUS/poll_status Polling status"
-		replies = []
+	def get_status
+		@log.debug "NEXUS/get_status Polling status"
+		changes = []
 	
 		begin
 			xml_status_raw = open(@xmluri+"game_status").read
@@ -120,8 +119,8 @@ class Nexus
 				newtime = Time.strptime(xml_status.elements[stage].text,"%s").localtime
 				
 				if newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
-					@log.debug("NEXUS/poll_status #{stage} was #{@prevtimes[stage]} now #{newtime}")				
-					replies << "Phoenix #{stage.tr('_',' ')}: #{newtime.strftime("%H:%M")}"
+					@log.debug("NEXUS/get_status #{stage} was #{@prevtimes[stage]} now #{newtime}")				
+					changes << "#{stage.tr('_',' ')}: #{newtime.strftime("%H:%M")}"
 				end
 
 				@prevtimes[stage] = newtime
@@ -129,10 +128,10 @@ class Nexus
 			end
 
 		rescue => e
-				@log.error "NEXUS/poll_status #{e.inspect}"
+				@log.error "NEXUS/get_status #{e.inspect}"
 		end
 		
-		return replies
+		return changes
 
 	end
 end

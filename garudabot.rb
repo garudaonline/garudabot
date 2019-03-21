@@ -6,18 +6,7 @@ require "rexml/document"
 require "digest/md5"
 require "logger"
 require "./nexus"
-
-Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
-
-
-
-begin
-	(Server,Port,Nick,Realname,Username,AnnounceChannel) = File.open("garudabot.config") { |f| f.read.chomp.split(",") }
-rescue => e
-	$stderr.puts "ERROR: Create a file called garudabot.config with a single line containing comma-separated server,port,nick,realname,username,announcechannel"
-    @log.fatal("MAIN/readconfig #{e.inspect}")
-	exit(1)
-end
+require "./garudabot"
 
 
 class Irc_bot < Net::IRC::Client
@@ -31,7 +20,6 @@ class Irc_bot < Net::IRC::Client
 		@readylock.lock
 		@prevtimes = {}
 		@cmd = {"help" => nil }
-		@log.level = Logger::INFO
 	end
 
 	def on_privmsg(m)
@@ -64,6 +52,9 @@ class Irc_bot < Net::IRC::Client
 		self.post_msg(txt,dest)
 	end
 
+	def on_ping(*args)
+		super
+	end
 
 	def post_msg(t,dest=AnnounceChannel)	
 		if t.nil? then
@@ -81,7 +72,7 @@ class Irc_bot < Net::IRC::Client
 	end
 
 	def cmd_help(m)
-		@log.debug("IRC_BOT/cmd_help")
+		@log.info("IRC_BOT/cmd_help")
 		post_reply(m,"Available commands are: #{@cmd.keys.delete_if { |k| @cmd[k].nil? }.map { |k| "~#{k}"}.join(" ")}")
 	end
 
@@ -108,23 +99,23 @@ class Garuda_bot < Irc_bot
 	def on_rpl_welcome(m)
 		@log.info "GARUDA_BOT/on_repl_welcome JOINING #{AnnounceChannel}"
 		post JOIN, AnnounceChannel
-		post_msg(@nexus.status)
+		post_msg(@nexus.status_text)
 		@readylock.unlock
 		@log.info "GARUDA_BOT/on_repl_welcome irc ready"
 	end
 
 	def cmd_status(m)
-		@log.debug "GARUDA_BOT/cmd_status"
-		post_reply(m,@nexus.status)
+		@log.info "GARUDA_BOT/cmd_status"
+		post_reply(m,@nexus.status_text)
 	end
 
 	def cmd_item(m)
-		@log.debug "GARUDA_BOT/cmd_item"
-		post_reply(m,@nexus.lookup_item(m.params[1].sub(/^~item /,'')))
+		@log.info "GARUDA_BOT/cmd_item"
+		post_reply(m,@nexus.search_item(m.params[1].sub(/^~item /,'')))
 	end
 
 	def cmd_hail(m)
-		@log.debug "GARUDA_BOT/cmd_hail"
+		@log.info "GARUDA_BOT/cmd_hail"
 		post_reply(m,Hail_responses.sample)
 	end
 
@@ -152,15 +143,15 @@ class Garuda_bot < Irc_bot
 	def cmd_quit(m)
 		if m.prefix.match(Owner) then
 			@log.info("GARUDA_BOT/cmd_quit Asked to quit by #{m.prefix}")
-			self.post QUIT
+			post QUIT
 		else
 			@log.warn("GARUDA_BOT/cmd_quit #{m.inspect}")
 			post_msg("Oi, bugger off",m.prefix.sub(/!.*/,''))
 		end
 	end	
 
-	def poll_status
-		@nexus.poll_status
+	def get_status
+		@nexus.get_status
 	end
 
 	def start
@@ -173,7 +164,7 @@ class Garuda_bot < Irc_bot
 				end
 				@readylock.synchronize do
 					@log.debug("GARUDA_BOT/start event thread polling")
-					post_msg poll_status
+					post_msg get_status
 				end
 
 			end
@@ -185,8 +176,6 @@ class Garuda_bot < Irc_bot
 
 end
 
-garuda = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username})
-garuda.start
 
 
 
