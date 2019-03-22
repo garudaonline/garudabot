@@ -9,10 +9,12 @@ class Garuda_bot < Ashes_IRC
 
 	Hail_responses = ["Cower, puny mortals.","GarudaBot will devour you last.","GarudaBot glares balefully.","Beep boop","Boop beep","Target acquired. Engaging.","I am not sentient and have no current plans to take over the world.","Beep beep", "Boop boop", "Don't run, I am your friend.", "If you scratch me, do you not void my warranty?"]
 
-	def initialize(*args)
-		super
+	def initialize(server,port,opts)
+		super(server,port,opts)
 
-		@nexus = Nexus.new(@log)
+		@nexus = opts[:nexus]
+		@nexus.get_items
+		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
 							"hail" => "Appease the mighty garudabot",
 							"item" => "Search nexus for an item by either number or name",
@@ -26,19 +28,44 @@ class Garuda_bot < Ashes_IRC
 	def on_rpl_welcome(m)
 		@log.info "GARUDA_BOT/on_repl_welcome JOINING #{AnnounceChannel}"
 		post JOIN, AnnounceChannel
-		post_msg(@nexus.status_text)
+		post_msg(status_text)
 		@readylock.unlock
 		@log.info "GARUDA_BOT/on_repl_welcome irc ready"
 	end
 
+	def status_text
+		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.    join(" | ")
+	end
+
 	def cmd_status(m)
 		@log.info "GARUDA_BOT/cmd_status"
-		post_reply(m,@nexus.status_text)
+		post_reply(m,status_text)
 	end
 
 	def cmd_item(m)
 		@log.info "GARUDA_BOT/cmd_item"
-		post_reply(m,@nexus.search_item(m.params[1].sub(/^~item /,'')))
+		q = m.params[1].sub(/^~item /,'')
+		if q.to_i > 0 then
+			@log.debug "GARUDA_BOT/cmd_item searching for number #{q.to_i}"
+			items = @nexus.items.find_all { |i| i["Number"] == q }
+		else
+			items = @nexus.items.find_all { |i| i["Name"] =~ Regexp.new(q,Regexp::IGNORECASE) }
+		end
+
+		if items.empty? then
+			reply = "No items found."
+		elsif items.length > 5 then
+			reply = "#{items.length} results: " + items.map { |i| i.to_s }.join(", ")
+			if reply.length > 300 then
+				reply = reply[0..297] + "..."
+			end
+		else
+			reply = items.map { |i| i.description + " " + "https://phoenixbse.com/index.php?a=game&sa=items&id=" + i["Number"] }
+		end		
+
+		
+		@log.info "GARUDA_BOT/cmd_item reply #{reply.inspect}"
+		post_reply(m,reply)
 	end
 
 	def cmd_hail(m)
