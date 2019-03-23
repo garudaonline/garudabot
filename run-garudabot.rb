@@ -22,7 +22,7 @@ end
 
 log.debug [Server,Port,Nick,Realname,Username,AnnounceChannel].inspect
 
-nexus = Nexus.from_file(".nexusid")
+nexus = Nexus.from_file(".nexusid",log)
 
 garuda = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username,:logger => log,:nexus => nexus})
 garuda.start
