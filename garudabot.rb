@@ -32,8 +32,8 @@ class Garuda_bot < Ashes_IRC
 	end
 
 	def on_rpl_welcome(m)
-		@log.info "GARUDA_BOT/on_repl_welcome JOINING #{AnnounceChannel}"
-		post JOIN, AnnounceChannel
+		@log.info "GARUDA_BOT/on_repl_welcome JOINING #{@channel}"
+		post JOIN, @channel
 		post_msg(status_text)
 		@readylock.unlock
 		@log.info "GARUDA_BOT/on_repl_welcome irc ready"

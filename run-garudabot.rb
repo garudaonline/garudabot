@@ -24,14 +24,18 @@ else
      File.open(config_fname, "w") {}
 end
 
+c_logger = config["Logger"] 
 log = Logger.new(STDOUT)
 
-log.level = Logger::DEBUG
-log.debug [Server,Port,Nick,Realname,Username,AnnounceChannel].inspect
+log.level = Logger.const_get(c_logger["level"])
+log.debug config.inspect
 
-nexus = Nexus.from_file(".nexusid",log)
+c_nexus = config["Nexus"] 
+nexus = Nexus.new(c_nexus["uid"] , c_nexus["code"]) 
 
-garuda = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username,:logger => log,:nexus => nexus})
+c_irc = config["Ashes_IRC"] 
+
+garuda = Garuda_bot.new(c_irc["server"] ,c_irc["port"] ,{:nick => c_irc["nick"] ,:real => c_irc["realname"] , :user => c_irc["user"] , :channel => c_irc["channel"], :logger => log,:nexus => nexus})
 garuda.start
 
 
