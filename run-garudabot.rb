@@ -7,6 +7,8 @@ require "./nexus"
 Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
 
 log = Logger.new(STDOUT)
+log.progname = "garuda-dev"
+
 log.level = Logger::DEBUG
 
 config = ARGV[0] || "garudabot.config"

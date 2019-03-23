@@ -4,11 +4,16 @@ require "net/irc"
 require "rexml/document"
 require "./nexus"
 require "./ashesirc"
+require "date"
 
 class Garuda_bot < Ashes_IRC
 
 	Hail_responses = ["Cower, puny mortals.","GarudaBot will devour you last.","GarudaBot glares balefully.","Beep boop","Boop beep","Target acquired. Engaging.","I am not sentient and have no current plans to take over the world.","Beep beep", "Boop boop", "Don't run, I am your friend.", "If you scratch me, do you not void my warranty?"]
 
+	Holidays = [ "2019-04-19","2019-04-22",
+				 "2019-05-06","2019-05-27","2019-08-26",
+				"2019-12-25","2019-12-26","2020-01-01","2020-04-10","2020-04-13",
+				"2020-05-04","2020-05-25","2020-08-31","2020-12-25","2020-12-28"].map { |d| Date.parse(d) }
 	def initialize(server,port,opts)
 		super(server,port,opts)
 
@@ -17,7 +22,8 @@ class Garuda_bot < Ashes_IRC
 		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
 							"hail" => "Appease the mighty garudabot",
-							"item" => "Search nexus for an item by either number or name",
+							"item" => "Search nexus for an item by either number or name",	
+							"holidays" => "Show dates of upcoming UK public holidays",
 							"say" => nil,
 							"quit" => nil,
 							"send" => nil
@@ -106,6 +112,22 @@ class Garuda_bot < Ashes_IRC
 
 	def get_status
 		@nexus.get_status
+	end
+
+	def cmd_holidays(m)
+		h = Holidays.find_all { |d| d > Date.today and d < (Date.today+31) }
+
+		if h.empty? then
+			h = Holidays.find { |d| d > Date.today }
+			if h.nil? then
+				post_reply(m,"I don't know about any holidays")
+				@log.error("GARUDA_BOT/cmd_holidays no holidays found")
+			else
+				post_reply(m,"Next holiday is #{h.strftime("%-d %B")}")
+			end
+		else 		
+			post_reply(m,"Upcoming holidays: #{h.map { |d| d.strftime("%-d %B") }.join(", ")}")
+		end
 	end
 
 	def start
