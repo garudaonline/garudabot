@@ -1,7 +1,6 @@
 
 class CallAndResponse
 
-	attr_accessor :responses
 
 	def initialize(responses,duration)
 		@timeout = nil
