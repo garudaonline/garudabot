@@ -22,7 +22,6 @@ class Garuda_bot < Ashes_IRC
 		@nexus.get_items
 		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
-							"hail" => "Appease the mighty garudabot",
 							"item" => "Search nexus for an item by either number or name",	
 							"holidays" => "Show dates of upcoming UK public holidays",
 							"say" => nil,
@@ -30,7 +29,7 @@ class Garuda_bot < Ashes_IRC
 							"send" => nil,
 							"time" => "Show current Phoenix server date and time"
 						  })
-
+		@msghandlers += [:msghandler_hail,:msghandler_blame]
 	end
 
 	def on_rpl_welcome(m)
@@ -39,6 +38,18 @@ class Garuda_bot < Ashes_IRC
 		post_msg(status_text)
 		@readylock.unlock
 		@log.info "GARUDA_BOT/on_repl_welcome irc ready"
+	end
+
+	def msghandler_hail(m)
+		if m.params[1] =~ /garudabot/i then
+			post_reply(m,Hail_responses.sample)
+		end
+	end
+
+	def msghandler_blame(m)
+		if m.params[1] =~ /bridge/ then
+			post_reply(m,"I blame Bridge.")
+		end
 	end
 
 	def status_text
@@ -87,11 +98,6 @@ class Garuda_bot < Ashes_IRC
 		
 		@log.info "GARUDA_BOT/cmd_item reply #{reply.inspect}"
 		post_reply(m,reply)
-	end
-
-	def cmd_hail(m)
-		@log.info "GARUDA_BOT/cmd_hail"
-		post_reply(m,Hail_responses.sample)
 	end
 
 	def cmd_say(m)

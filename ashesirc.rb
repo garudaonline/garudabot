@@ -14,6 +14,7 @@ class Ashes_IRC < Net::IRC::Client
 		@readylock.lock
 		@prevtimes = {}
 		@cmd = {"help" => nil }
+		@msghandlers = []
 		@channel = opts[:channel] 
 	end
 
@@ -33,6 +34,10 @@ class Ashes_IRC < Net::IRC::Client
 #			else
 #				@log.debug("ASHES_IRC/on_privmsg Didn't match #{regex.inspect}")
 			end
+		end
+
+		@msghandlers.each do |h|
+			self.send(h,m)
 		end
 
 	end
