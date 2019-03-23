@@ -21,7 +21,8 @@ if File.exists?(config_fname) then
      config = YAML.load(File.open(config_fname).read)
 else
      puts "ERROR: No config found. Creating a template config file #{config_fname}" 
-     File.open(config_fname, "w") {}
+     File.open(config_fname, "w") { |f| f.puts config_template.to_yaml }
+     exit(1)
 end
 
 c_logger = config["Logger"] 
