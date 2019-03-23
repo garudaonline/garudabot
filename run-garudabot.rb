@@ -36,7 +36,7 @@ nexus = Nexus.new(c_nexus["uid"] , c_nexus["code"])
 
 c_irc = config["Ashes_IRC"] 
 
-garuda = Garuda_bot.new(c_irc["server"] ,c_irc["port"] ,{:nick => c_irc["nick"] ,:real => c_irc["realname"] , :user => c_irc["user"] , :channel => c_irc["channel"], :logger => log,:nexus => nexus})
+garuda = Garuda_bot.new(c_irc["server"] ,c_irc["port"] ,{:nick => c_irc["nick"] ,:real => c_irc["realname"] , :user => c_irc["user"] , :channel => c_irc["channel"], :logger => log,:nexus => nexus,:owner => c_irc["owner"]})
 garuda.start
 
 

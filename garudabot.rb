@@ -18,6 +18,7 @@ class Garuda_bot < Ashes_IRC
 		super(server,port,opts)
 
 		@nexus = opts[:nexus]
+		@owner = Regexp.new(opts[:owner])
 		@nexus.get_items
 		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
@@ -81,7 +82,7 @@ class Garuda_bot < Ashes_IRC
 
 	def cmd_say(m)
 
-		if m.prefix.match(Owner) then
+		if m.prefix.match(@owner) then
 			@log.info "GARUDA_BOT/cmd_say #{m.inspect}"
 			post_msg(m.params[1].sub(/^~say /,''))
 		else
@@ -91,7 +92,7 @@ class Garuda_bot < Ashes_IRC
 	end
 
 	def cmd_send(m)
-		if m.prefix.match(Owner) then
+		if m.prefix.match(@owner) then
 			@log.info "GARUDA_BOT/cmd_send #{m.inspect}"
 			post(m.params[1].sub(/^~send /,''))
 		else
@@ -101,7 +102,7 @@ class Garuda_bot < Ashes_IRC
 	end
 
 	def cmd_quit(m)
-		if m.prefix.match(Owner) then
+		if m.prefix.match(@owner) then
 			@log.info("GARUDA_BOT/cmd_quit Asked to quit by #{m.prefix}")
 			post QUIT
 		else
