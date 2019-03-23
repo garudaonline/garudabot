@@ -29,10 +29,14 @@ c_logger = config["Logger"]
 log = Logger.new(STDOUT)
 
 log.level = Logger.const_get(c_logger["level"])
+log.progname = VERSION
+
+log.unknown "Log level #{log.level}"
+
 log.debug config.inspect
 
 c_nexus = config["Nexus"] 
-nexus = Nexus.new(c_nexus["uid"] , c_nexus["code"]) 
+nexus = Nexus.new(c_nexus["uid"] , c_nexus["code"],log) 
 
 c_irc = config["Ashes_IRC"] 
 
