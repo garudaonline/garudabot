@@ -6,7 +6,7 @@ require "./nexus"
 require "yaml" 
 
 
-VERSION = "garuda-1.1"
+VERSION = "garuda-1.2"
 
 config_template = { "Ashes_IRC" => { "server" => "example.com", "port" => 6667, "nick" => "ashbot", 
                                                              "realname" => "Ashes Bot", "user" => "ashbot", "channel" =>"##test", 
