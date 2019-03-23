@@ -14,6 +14,7 @@ class Ashes_IRC < Net::IRC::Client
 		@readylock.lock
 		@prevtimes = {}
 		@cmd = {"help" => nil }
+		@channel = opts[:channel] 
 	end
 
 	def on_privmsg(m)
@@ -37,7 +38,7 @@ class Ashes_IRC < Net::IRC::Client
 	end
 
 	def post_reply(m,txt)
-		if m.params[0] == Nick then
+		if m.params[0] == self.nick then
 			dest = m.prefix.sub(/!.*/,'')
 		else
 			dest = m.params[0]
@@ -50,7 +51,7 @@ class Ashes_IRC < Net::IRC::Client
 		super
 	end
 
-	def post_msg(t,dest=AnnounceChannel)	
+	def post_msg(t,dest=@channel)	
 		if t.nil? then
 			@log.warn "ASHES_IRC/post_msg nil text"
 		elsif t.respond_to?("each") then

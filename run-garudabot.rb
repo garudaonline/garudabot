@@ -3,29 +3,40 @@
 require "logger"
 require "./garudabot.rb"
 require "./nexus"
+require "yaml" 
 
-Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
 
-log = Logger.new(STDOUT)
+VERSION = "garuda-1.1"
 
-log.level = Logger::INFO
+config_template = { "Ashes_IRC" => { "server" => "example.com", "port" => 6667, "nick" => "ashbot", 
+                                                             "realname" => "Ashes Bot", "user" => "ashbot", "channel" =>"##test", 
+                                                              "owner" => "owner!~owner@example.com"}, 
+                                   "Garuda_bot" => {}, 
+                                   "Nexus" => { "uid" => "1", "code" => "abcd" }, 
+                                   "Logger" => { "level" => "DEBUG" } 
+                                  } 
+config_fname = ARGV[0] || "garudabot.config"
 
-config = ARGV[0] || "garudabot.config"
-
-begin
-	(Server,Port,Nick,Realname,Username,AnnounceChannel) = File.open(config) { |f| f.read.chomp.split(",") }
-rescue => e
-	log.fatal("MAIN/readconfig #{e.inspect}")
-	$stderr.puts "ERROR: Create a file called garudabot.config with a single line containing comma-separated server,port,nick,realname,username,announcechannel"
-  
-	exit(1)
+if File.exists?(config_fname) then
+     config = YAML.load(File.open(config_fname).read)
+else
+     puts "ERROR: No config found. Creating a template config file #{config_fname}" 
+     File.open(config_fname, "w") { |f| f.puts config_template.to_yaml }
+     exit(1)
 end
 
-log.debug [Server,Port,Nick,Realname,Username,AnnounceChannel].inspect
+c_logger = config["Logger"] 
+log = Logger.new(STDOUT)
 
-nexus = Nexus.from_file(".nexusid",log)
+log.level = Logger.const_get(c_logger["level"])
+log.debug config.inspect
 
-garuda = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username,:logger => log,:nexus => nexus})
+c_nexus = config["Nexus"] 
+nexus = Nexus.new(c_nexus["uid"] , c_nexus["code"]) 
+
+c_irc = config["Ashes_IRC"] 
+
+garuda = Garuda_bot.new(c_irc["server"] ,c_irc["port"] ,{:nick => c_irc["nick"] ,:real => c_irc["realname"] , :user => c_irc["user"] , :channel => c_irc["channel"], :logger => log,:nexus => nexus,:owner => c_irc["owner"]})
 garuda.start
 
 
