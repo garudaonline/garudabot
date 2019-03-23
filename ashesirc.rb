@@ -38,7 +38,7 @@ class Ashes_IRC < Net::IRC::Client
 	end
 
 	def post_reply(m,txt)
-		if m.params[0] == Nick then
+		if m.params[0] == self.nick then
 			dest = m.prefix.sub(/!.*/,'')
 		else
 			dest = m.params[0]
