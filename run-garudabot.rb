@@ -7,7 +7,9 @@ require "./nexus"
 Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
 
 log = Logger.new(STDOUT)
-log.level = Logger:INFO
+log.progname = "garuda1.0"
+
+log.level = Logger::INFO
 
 config = ARGV[0] || "garudabot.config"
 
@@ -22,7 +24,7 @@ end
 
 log.debug [Server,Port,Nick,Realname,Username,AnnounceChannel].inspect
 
-nexus = Nexus.from_file(".nexusid")
+nexus = Nexus.from_file(".nexusid",log)
 
 garuda = Garuda_bot.new(Server,Port,{:nick => Nick,:real => Realname, :user => Username,:logger => log,:nexus => nexus})
 garuda.start
