@@ -3,25 +3,30 @@
 require "logger"
 require "./garudabot.rb"
 require "./nexus"
+require "yaml" 
 
-Owner = /^HEX_Aspect7!~jason@jasonw.jasonw.org.uk$/
+
+VERSION = "garuda-1.0-iss7"
+
+config_template = { "Ashes_IRC" => { "server" => "example.com", "port" => 6667, "nick" => "ashbot", 
+                                                             "realname" => "Ashes Bot", "user" => "ashbot", "channel" =>"##test", 
+                                                              "owner" => "owner!~owner@example.com"}, 
+                                   "Garuda_bot" => {}, 
+                                   "Nexus" => { "uid" => "1", "code" => "abcd" }, 
+                                   "Logger" => { "level" => "DEBUG" } 
+                                  } 
+config_fname = ARGV[0] || "garudabot.config"
+
+if File.exists?(config_fname) then
+     config = YAML.load(File.open(config_fname).read)
+else
+     puts "ERROR: No config found. Creating a template config file #{config_fname}" 
+     File.open(config_fname, "w") {}
+end
 
 log = Logger.new(STDOUT)
 
 log.level = Logger::DEBUG
-log.progname = "garuda-1.0-dev"
-
-config = ARGV[0] || "garudabot.config"
-
-begin
-	(Server,Port,Nick,Realname,Username,AnnounceChannel) = File.open(config) { |f| f.read.chomp.split(",") }
-rescue => e
-	log.fatal("MAIN/readconfig #{e.inspect}")
-	$stderr.puts "ERROR: Create a file called garudabot.config with a single line containing comma-separated server,port,nick,realname,username,announcechannel"
-  
-	exit(1)
-end
-
 log.debug [Server,Port,Nick,Realname,Username,AnnounceChannel].inspect
 
 nexus = Nexus.from_file(".nexusid",log)
