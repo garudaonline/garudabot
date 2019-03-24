@@ -4,6 +4,7 @@ require "net/irc"
 require "rexml/document"
 require "./nexus"
 require "./ashesirc"
+require "./callandresponse"
 require "date"
 
 class Garuda_bot < Ashes_IRC
@@ -22,7 +23,6 @@ class Garuda_bot < Ashes_IRC
 		@nexus.get_items
 		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
-							"hail" => "Appease the mighty garudabot",
 							"item" => "Search nexus for an item by either number or name",	
 							"holidays" => "Show dates of upcoming UK public holidays",
 							"say" => nil,
@@ -31,6 +31,17 @@ class Garuda_bot < Ashes_IRC
 							"time" => "Show current Phoenix server date and time"
 						  })
 
+		@hail_handler = CallAndResponse.new({ 	1 => Hail_responses,
+												2 => Hail_responses,
+												3 => ["Beep boop, battery low."]},
+											300)
+
+		@blame_handler = CallAndResponse.new({   1 => ["I blame Bridge."],
+												2 => ["I *still* blame Bridge."],
+												3 => ["From now on, assume I blame Bridge for everything."]},
+											300)
+
+		@msghandlers += [:msghandler_hail,:msghandler_blame]
 	end
 
 	def on_rpl_welcome(m)
@@ -40,6 +51,31 @@ class Garuda_bot < Ashes_IRC
 		@readylock.unlock
 		@log.info "GARUDA_BOT/on_repl_welcome irc ready"
 	end
+
+	def msghandler_hail(m)
+		if m.params[1] =~ /garudabot/i then
+			response = @hail_handler.call
+			if not response.nil? then
+				post_reply(m,response)
+				@log.info "GARUDA_BOT/msghandler_hail responding #{response}"
+			else
+				@log.info "GARUDA_BOT/msghandler_hail timed out"
+			end
+		end
+	end
+
+	def msghandler_blame(m)
+		if m.params[1] =~ /bridge/ then
+			response = @blame_handler.call
+			if not response.nil? then
+				post_reply(m,response)
+				@log.info "GARUDA_BOT/msghandler_blame responding #{response}"
+			else
+				@log.info "GARUDA_BOT/msghandler_blame timed out"
+			end
+		end
+	end
+
 
 	def status_text
 		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.    join(" | ")
@@ -87,11 +123,6 @@ class Garuda_bot < Ashes_IRC
 		
 		@log.info "GARUDA_BOT/cmd_item reply #{reply.inspect}"
 		post_reply(m,reply)
-	end
-
-	def cmd_hail(m)
-		@log.info "GARUDA_BOT/cmd_hail"
-		post_reply(m,Hail_responses.sample)
 	end
 
 	def cmd_say(m)
