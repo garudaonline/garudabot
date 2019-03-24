@@ -30,7 +30,7 @@ class Garuda_bot < Ashes_IRC
 							"time" => "Show current Phoenix server date and time"
 						  })
 
-		@hail_handler = CallAndResponse.new ({ 	1 => HailResponses,
+		@hail_handler = CallAndResponse.new({ 	1 => HailResponses,
 												2 => HailResponses,
 												3 => ["Beep boop, battery low."]},
 											300)
