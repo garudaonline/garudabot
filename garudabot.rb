@@ -29,6 +29,17 @@ class Garuda_bot < Ashes_IRC
 							"send" => nil,
 							"time" => "Show current Phoenix server date and time"
 						  })
+
+		@hail_handler = CallAndResponse.new ({ 	1 => HailResponses,
+												2 => HailResponses,
+												3 => ["Beep boop, battery low."]},
+											300)
+
+		@blame_handler = CallAndResponse.new({   1 => ["I blame Bridge."],
+												2 => ["I *still* blame Bridge."],
+												3 => ["From now on, assume I blame Bridge for everything."]},
+											300)
+
 		@msghandlers += [:msghandler_hail,:msghandler_blame]
 	end
 
@@ -42,15 +53,28 @@ class Garuda_bot < Ashes_IRC
 
 	def msghandler_hail(m)
 		if m.params[1] =~ /garudabot/i then
-			post_reply(m,Hail_responses.sample)
+			response = @hail_handler.call
+			if not response.nil? then
+				post_reply(m,response)
+				@log.info "GARUDA_BOT/msghandler_hail responding #{response}"
+			else
+				@log.info "GARUDA_BOT/msghandler_hail timed out"
+			end
 		end
 	end
 
 	def msghandler_blame(m)
 		if m.params[1] =~ /bridge/ then
-			post_reply(m,"I blame Bridge.")
+			response = @blame_handler.call
+			if not response.nil? then
+				post_reply(m,response)
+				@log.info "GARUDA_BOT/msghandler_blame responding #{response}"
+			else
+				@log.info "GARUDA_BOT/msghandler_blame timed out"
+			end
 		end
 	end
+
 
 	def status_text
 		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.    join(" | ")
