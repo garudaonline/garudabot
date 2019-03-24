@@ -4,6 +4,7 @@ require "net/irc"
 require "rexml/document"
 require "./nexus"
 require "./ashesirc"
+require "./callandresponse"
 require "date"
 
 class Garuda_bot < Ashes_IRC
@@ -30,8 +31,8 @@ class Garuda_bot < Ashes_IRC
 							"time" => "Show current Phoenix server date and time"
 						  })
 
-		@hail_handler = CallAndResponse.new({ 	1 => HailResponses,
-												2 => HailResponses,
+		@hail_handler = CallAndResponse.new({ 	1 => Hail_responses,
+												2 => Hail_responses,
 												3 => ["Beep boop, battery low."]},
 											300)
 
