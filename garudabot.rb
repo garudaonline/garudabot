@@ -108,7 +108,7 @@ class Garuda_bot < Ashes_IRC
 		end
 
 		if items.empty? then
-			reply = "No items found."
+			reply = "No items found (they might be private knowledge)."
 		elsif items.length > 5 then
 			reply = "#{items.length} results: " + items.map { |i| i.to_s }.join(", ")
 			if reply.length > 300 then
