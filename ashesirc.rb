@@ -27,7 +27,7 @@ class Ashes_IRC < Net::IRC::Client
 			# Remove a possible nick from the start of the line to allow for discord bridges (yuck)
 			m.params[1].sub!(/^<[^>]+> /,'')
 
-			regex = /^~?#{k}/
+			regex = /^~#{k}/
 			if m.params[1].match(regex)
 				@log.debug "ASHES_IRC/on_privmsg Matched #{regex.inspect}"
 				self.send("cmd_#{k}",m)
