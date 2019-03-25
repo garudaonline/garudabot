@@ -20,8 +20,6 @@ class Garuda_bot < Ashes_IRC
 
 		@nexus = opts[:nexus]
 		@owner = Regexp.new(opts[:owner])
-		@nexus.get_items
-		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
 							"item" => "Search nexus for an item by either number or name",	
 							"holidays" => "Show dates of upcoming UK public holidays",
@@ -78,7 +76,7 @@ class Garuda_bot < Ashes_IRC
 
 
 	def status_text
-		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.    join(" | ")
+		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.join(" | ")
 	end
 
 	def cmd_time(m)
@@ -110,7 +108,7 @@ class Garuda_bot < Ashes_IRC
 		end
 
 		if items.empty? then
-			reply = "No items found."
+			reply = "Nothing found - it might be private knowledge, sorry"
 		elsif items.length > 5 then
 			reply = "#{items.length} results: " + items.map { |i| i.to_s }.join(", ")
 			if reply.length > 300 then
@@ -157,7 +155,7 @@ class Garuda_bot < Ashes_IRC
 	end	
 
 	def get_status
-		@nexus.get_status
+		@nexus.get_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }
 	end
 
 	def cmd_holidays(m)
@@ -176,7 +174,14 @@ class Garuda_bot < Ashes_IRC
 		end
 	end
 
+	def get_items
+		@nexus.get_items
+	end
+
 	def start
+		self.get_items
+		self.get_status
+
 		@log.debug("GARUDA_BOT/start starting event thread")
 		Thread.new do
 			while true do
