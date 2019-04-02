@@ -80,15 +80,8 @@ class Garuda_bot < Ashes_IRC
 	end
 
 	def cmd_time(m)
-		begin
-			http_response = Net::HTTP.get_response(URI("http://phoenixbse.com"))
-			@log.info("GARUDA_BOT/cmd_time response #{http_response.inspect}")
-			response = "Current Phoenix time is: #{http_response["Date"]}"
-			
-		rescue => e
-			response = "Something went wrong. Try again later!"
-			@log.error("GARUDA_BOT/cmd_time Exception #{e.inspect}")
-		end
+		response = "Current Phoenix time is: #{Time.now().to_s}"
+		@log.info "GARUDA_BOT/cmd_time #{response}"	
 		post_reply(m,response)
 	end
 
