@@ -26,7 +26,7 @@ class Garuda_bot < Ashes_IRC
 							"say" => nil,
 							"quit" => nil,
 							"send" => nil,
-							"time" => "Show current Phoenix server date and time"
+							"time" => nil
 						  })
 
 		@hail_handler = CallAndResponse.new({ 	1 => Hail_responses,
@@ -87,6 +87,10 @@ class Garuda_bot < Ashes_IRC
 		end
 		response += @nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.join(" | ")
 
+	end
+
+	def cmd_time(m)
+		cmd_status(m)
 	end
 
 	def cmd_status(m)
