@@ -76,7 +76,7 @@ class Garuda_bot < Ashes_IRC
 
 
 	def status_text
-		response = "Phoenix | Current time: #{Time.now().strftime("%H:%M")}"
+		response = "Phoenix | Current time: #{Time.now().strftime("%H:%M")} |"
 		response += @nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.join(" | ")
 
 	end
