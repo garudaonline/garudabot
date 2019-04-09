@@ -76,20 +76,17 @@ class Garuda_bot < Ashes_IRC
 
 
 	def status_text
-		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.join(" | ")
-	end
-
-	def cmd_time(m)
 		begin
 			http_response = Net::HTTP.get_response(URI("http://phoenixbse.com"))
-			@log.info("GARUDA_BOT/cmd_time response #{http_response.inspect}")
-			response = "Current Phoenix time is: #{http_response["Date"]}"
+			@log.info("GARUDA_BOT/cmd_status response #{http_response.inspect}")
+			response = "Phoenix | Current time: #{http_response["Date"]} | "
 			
 		rescue => e
-			response = "Something went wrong. Try again later!"
-			@log.error("GARUDA_BOT/cmd_time Exception #{e.inspect}")
+			response = "Phoenix: | "
+			@log.error("GARUDA_BOT/status_text Exception #{e.inspect}")
 		end
-		post_reply(m,response)
+		response += @nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.join(" | ")
+
 	end
 
 	def cmd_status(m)
