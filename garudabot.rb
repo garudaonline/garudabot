@@ -20,15 +20,13 @@ class Garuda_bot < Ashes_IRC
 
 		@nexus = opts[:nexus]
 		@owner = Regexp.new(opts[:owner])
-		@nexus.get_items
-		@nexus.get_status
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
 							"item" => "Search nexus for an item by either number or name",	
 							"holidays" => "Show dates of upcoming UK public holidays",
 							"say" => nil,
 							"quit" => nil,
 							"send" => nil,
-							"time" => "Show current Phoenix server date and time"
+							"time" => nil
 						  })
 
 		@hail_handler = CallAndResponse.new({ 	1 => Hail_responses,
@@ -78,20 +76,21 @@ class Garuda_bot < Ashes_IRC
 
 
 	def status_text
-		@nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.    join(" | ")
+		begin
+			http_response = Net::HTTP.get_response(URI("http://phoenixbse.com"))
+			@log.info("GARUDA_BOT/cmd_status response #{http_response.inspect}")
+			response = "Phoenix | Current time: #{http_response["Date"]} | "
+			
+		rescue => e
+			response = "Phoenix: | "
+			@log.error("GARUDA_BOT/status_text Exception #{e.inspect}")
+		end
+		response += @nexus.current_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }.join(" | ")
+
 	end
 
 	def cmd_time(m)
-		begin
-			http_response = Net::HTTP.get_response(URI("http://phoenixbse.com"))
-			@log.info("GARUDA_BOT/cmd_time response #{http_response.inspect}")
-			response = "Current Phoenix time is: #{http_response["Date"]}"
-			
-		rescue => e
-			response = "Something went wrong. Try again later!"
-			@log.error("GARUDA_BOT/cmd_time Exception #{e.inspect}")
-		end
-		post_reply(m,response)
+		cmd_status(m)
 	end
 
 	def cmd_status(m)
@@ -157,7 +156,7 @@ class Garuda_bot < Ashes_IRC
 	end	
 
 	def get_status
-		@nexus.get_status
+		@nexus.get_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }
 	end
 
 	def cmd_holidays(m)
@@ -176,7 +175,14 @@ class Garuda_bot < Ashes_IRC
 		end
 	end
 
+	def get_items
+		@nexus.get_items
+	end
+
 	def start
+		self.get_items
+		self.get_status
+
 		@log.debug("GARUDA_BOT/start starting event thread")
 		Thread.new do
 			while true do
