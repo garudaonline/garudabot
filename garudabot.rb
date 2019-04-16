@@ -23,6 +23,7 @@ class Garuda_bot < Ashes_IRC
 		@cmd = @cmd.merge({ "status" => "Displays current Phoenix game status",
 							"item" => "Search nexus for an item by either number or name",	
 							"holidays" => "Show dates of upcoming UK public holidays",
+							"stardate" => "Convert between stardate and real dates",
 							"say" => nil,
 							"quit" => nil,
 							"send" => nil,
@@ -149,6 +150,38 @@ class Garuda_bot < Ashes_IRC
 
 	def get_status
 		@nexus.get_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }
+	end
+
+	def cmd_stardate(m)
+		begin
+			q = m.params[1].sub(/^~stardate /,'')
+
+			(y,w,d) = q.split(".").map { |x| x.to_i }
+
+			if y.nil? or y < 100 or y > 999 or
+			w.nil? or w < 1 or w > 53 or
+			d.nil? or d < 1 or d > 5 then
+				@log.info("GARUDA_BOT/cmd_stardate Parsing date #{q}")
+				date = Date.parse(q)
+				if date.wday==6 then date -= 1 end
+				if date.wday==0 then date += 1 end
+			else
+				@log.info("GARUDA_BOT/cmd_stardate stardate #{q}")
+				y = y + 1800
+				date = Date.commercial(y,w,d)
+			end
+
+			response = date.strftime("%G.%-V.%u") + " is " + date.strftime("%-d %b %Y")
+
+			if date.cweek >= 51 or date.cweek <= 2 then
+				response += " (ish - beginning/end of the year is a bit iffy)"
+			end 
+		rescue => e
+			response = "I need either a stardate or a recognisable date"
+			@log.info("GARUDA_BOT/cmd_stardate #{e.to_s}")
+		end
+
+		post_reply(m,response)
 	end
 
 	def cmd_holidays(m)
