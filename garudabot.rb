@@ -152,6 +152,11 @@ class Garuda_bot < Ashes_IRC
 		@nexus.get_status.map { |s| s[0] + ": " + s[1].strftime("%H:%M") }
 	end
 
+	def date_to_stardate(date)
+		(date.strftime("%G").to_i-1800).to_s +
+		date.strftime(".%-V.%u")
+	end
+
 	def cmd_stardate(m)
 		begin
 			q = m.params[1].sub(/^~stardate /,'')
@@ -171,7 +176,7 @@ class Garuda_bot < Ashes_IRC
 				date = Date.commercial(y,w,d)
 			end
 
-			response = date.strftime("%G.%-V.%u") + " is " + date.strftime("%-d %b %Y")
+			response = date_to_stardate(date) + " is " + date.strftime("%-d %b %Y")
 
 			if date.cweek >= 51 or date.cweek <= 2 then
 				response += " (ish - beginning/end of the year is a bit iffy)"
