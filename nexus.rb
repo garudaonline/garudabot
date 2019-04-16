@@ -31,7 +31,7 @@ class Nexus
 			Stages.each do |stage|
 				t = @prevtimes[stage]
 				if not t.nil? and t.strftime("%s").to_i > 1 then
-					status << [stage.sub(/.*_/,'').capitalize,t]
+					status << [stage.tr('_',' ').capitalize,t]
 				end
 			end
 			@log.info("NEXUS/current_status #{status.inspect}")
@@ -77,7 +77,7 @@ class Nexus
 				
 				if newtime.strftime("%s").to_i > 1 and newtime != @prevtimes[stage] then
 					@log.debug("NEXUS/get_status #{stage} was #{@prevtimes[stage]} now #{newtime}")				
-					changes << [stage.sub(/.*_/,'').capitalize,newtime]
+					changes << [stage.tr('_',' ').capitalize,newtime]
 				end
 
 				@prevtimes[stage] = newtime
