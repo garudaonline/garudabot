@@ -3,7 +3,7 @@
 require "open-uri"
 require "rexml/document"
 require "logger"
-require "./item"
+require_relative "item"
 
 class Nexus
 	Stages = ["turns_downloaded", "turns_processed", "turns_uploaded", "emails_sent","specials_processed","day_finished"]

@@ -2,9 +2,9 @@
 
 require "net/irc"
 require "rexml/document"
-require "./nexus"
-require "./ashesirc"
-require "./callandresponse"
+require_relative "nexus"
+require_relative "ashesirc"
+require_relative "callandresponse"
 require "date"
 
 class Garuda_bot < Ashes_IRC
