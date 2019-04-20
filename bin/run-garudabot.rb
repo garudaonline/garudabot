@@ -1,8 +1,8 @@
 #!/usr/bin/ruby
 
 require "logger"
-require_relative "../lib/garudabot"
-require_relative "../lib/nexus"
+require_relative "../lib/garudabot/garudabot"
+require_relative "../lib/nexus/nexus"
 require "yaml" 
 
 

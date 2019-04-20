@@ -2,7 +2,7 @@
 
 require "net/irc"
 require "rexml/document"
-require_relative "nexus"
+require_relative "../nexus/nexus"
 require_relative "ashesirc"
 require_relative "callandresponse"
 require "date"
